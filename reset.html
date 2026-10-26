@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-wvZajNGI900SYqBdQ1pnruWip7N6DZ0BbAgnV+2ZOHg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://www.google.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Resetar App ANEST</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    max-width: 560px;
+    margin: 60px auto;
+    padding: 0 24px;
+    color: #1e293b;
+    line-height: 1.6;
+  }
+  h1 { color: #0f172a; }
+  .status {
+    background: #f1f5f9;
+    border-left: 4px solid #3b82f6;
+    padding: 16px;
+    border-radius: 6px;
+    margin: 20px 0;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 14px;
+    white-space: pre-line;
+  }
+  .success { border-color: #10b981; background: #ecfdf5; }
+  .error { border-color: #ef4444; background: #fef2f2; }
+  a.btn {
+    display: inline-block;
+    background: #0f172a;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+<h1>🧹 Resetar App ANEST</h1>
+<p>Este utilitário desregistra o Service Worker e limpa todos os caches do navegador para esta origem. Use isso se o app estiver servindo versões antigas.</p>
+<div class="status" id="status">Iniciando limpeza...</div>
+<a class="btn" href="./" id="goto" style="display:none">Abrir o App</a>
+
+<script>
+(async function() {
+  const status = document.getElementById('status');
+  const goto = document.getElementById('goto');
+  const log = [];
+
+  function print(msg) {
+    log.push(msg);
+    status.textContent = log.join('\n');
+  }
+
+  try {
+    // 1. Unregister all service workers
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      print('Service Workers encontrados: ' + regs.length);
+      for (const r of regs) {
+        await r.unregister();
+        print('  ✓ Desregistrado: ' + (r.scope || 'sw'));
+      }
+    } else {
+      print('Service Worker API não disponível.');
+    }
+
+    // 2. Clear all Cache Storage
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      print('Caches encontrados: ' + keys.length);
+      for (const k of keys) {
+        await caches.delete(k);
+        print('  ✓ Removido: ' + k);
+      }
+    }
+
+    // 3. Clear localStorage cache entries (but PRESERVE user data)
+    // The app stores medical data in keys like anest.preop.v1, anest.patients.v1, etc.
+    // We DO NOT touch those. We only clear non-namespaced junk if any.
+
+    print('\n✅ Limpeza concluída!');
+    print('Agora clica em "Abrir o App".');
+    status.className = 'status success';
+    goto.style.display = 'inline-block';
+  } catch (e) {
+    print('\n❌ Erro: ' + e.message);
+    status.className = 'status error';
+  }
+})();
+</script>
+</body>
+</html>
